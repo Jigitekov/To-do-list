@@ -9,7 +9,27 @@ class ToDoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: MainPage());
+    return MaterialApp(
+      theme: ThemeData(
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.yellow,
+            foregroundColor: Colors.black,
+          ),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return Colors.green; // Цвет, когда галочка СТОИТ
+            }
+            return Colors.grey[350]; // Цвет, когда галочка ПУСТАЯ
+          }),
+          checkColor: WidgetStateProperty.all(Colors.white),
+          // colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+        ),
+      ),
+      home: MainPage(),
+    );
   }
 }
 
@@ -75,7 +95,34 @@ class _MainPageState extends State<MainPage> {
               itemBuilder: (context, index) {
                 final task = tasks[index];
 
-                return CheckboxListTile(
+                return ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TaskDetailPage(task: task),
+                      ),
+                    );
+                  },
+                  leading: Checkbox(
+                    value: task.isCompleted,
+                    onChanged: (value) {
+                      setState(() {
+                        task.isCompleted = value!;
+                      });
+                    },
+                  ),
+                  subtitle: task.description != null
+                      ? Text(
+                          task.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        )
+                      : null,
                   title: Text(
                     task.title,
                     style: TextStyle(
@@ -86,21 +133,6 @@ class _MainPageState extends State<MainPage> {
                           : null,
                     ),
                   ),
-                  value: task.isCompleted,
-                  onChanged: (value) {
-                    setState(() {
-                      task.isCompleted = value!;
-                    });
-                  },
-                  subtitle: task.description != null
-                      ? Text(
-                          task.description!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        )
-                      : null,
                 );
               },
             ),
@@ -196,17 +228,14 @@ class _AddTaskPageState extends State<AddTaskPage> {
                     );
                     return;
                   }
-
-                  if (title.isNotEmpty) {
-                    Task newTask = Task(
-                      id: DateTime.now().toString(),
-                      title: title,
-                      description: description.isEmpty ? null : description,
-                    );
-                    Navigator.pop(context, newTask);
-                    titleController.clear();
-                    descriptionController.clear();
-                  }
+                  Task newTask = Task(
+                    id: DateTime.now().toString(),
+                    title: title,
+                    description: description.isEmpty ? null : description,
+                  );
+                  Navigator.pop(context, newTask);
+                  titleController.clear();
+                  descriptionController.clear();
                 },
                 child: Text('Add task', style: TextStyle(fontSize: 18)),
               ),
@@ -222,5 +251,165 @@ class _AddTaskPageState extends State<AddTaskPage> {
     titleController.dispose();
     descriptionController.dispose();
     super.dispose();
+  }
+}
+
+class TaskDetailPage extends StatefulWidget {
+  final Task task;
+
+  const TaskDetailPage({super.key, required this.task});
+
+  @override
+  State<TaskDetailPage> createState() => _TaskDetailPageState();
+}
+
+class _TaskDetailPageState extends State<TaskDetailPage> {
+  final TextEditingController newTitleController = TextEditingController();
+  late TextEditingController titleController;
+  DateTime selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController(text: widget.task.title);
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked; // Обновляем экран
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('${widget.task.title}')),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 20, top: 30),
+              child: Text(
+                'Title: ${widget.task.title}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            SizedBox(height: 12),
+            Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: Text(
+                'Description:',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: Text(
+                widget.task.description?.isEmpty ?? true
+                    ? 'The description is missing'
+                    : widget.task.description!,
+                style: TextStyle(
+                  fontSize: (widget.task.description?.isEmpty ?? true)
+                      ? 13
+                      : 15,
+                  color: (widget.task.description?.isEmpty ?? true)
+                      ? Colors.grey[530]
+                      : Colors.grey[750],
+                  fontStyle: (widget.task.description?.isEmpty ?? true)
+                      ? FontStyle.italic
+                      : FontStyle.normal,
+                ),
+              ),
+            ),
+            SizedBox(height: 12),
+            Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(
+                      text: 'Task status: ',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextSpan(
+                      text: widget.task.isCompleted
+                          ? 'Completed'
+                          : 'Not completed',
+                      style: TextStyle(
+                        // Цвет меняется в зависимости от условия
+                        color: widget.task.isCompleted
+                            ? Colors.green
+                            : Colors.red,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 30),
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.only(left: 20),
+                  child: ElevatedButton(
+                    onPressed: _pickDate,
+                    child: Text('Choose date'),
+                  ),
+                ),
+                SizedBox(width: 25),
+                Text(
+                  "${selectedDate.day.toString().padLeft(2, '0')}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.year}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.only(left: 40),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      print('Edited');
+                    },
+                    child: Text('Edit'),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsetsGeometry.only(right: 40),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      print('Deleted');
+                    },
+                    child: Text('Delete'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
