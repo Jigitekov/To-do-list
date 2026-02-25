@@ -11,6 +11,11 @@ class ToDoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.white,
+          primary: Colors.green,
+          onPrimary: Colors.white,
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.yellow,
@@ -25,7 +30,6 @@ class ToDoApp extends StatelessWidget {
             return Colors.grey[350]; // Цвет, когда галочка ПУСТАЯ
           }),
           checkColor: WidgetStateProperty.all(Colors.white),
-          // colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
         ),
       ),
       home: MainPage(),
@@ -366,7 +370,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             Row(
               children: [
                 Padding(
-                  padding: EdgeInsetsGeometry.only(left: 20),
+                  padding: EdgeInsets.only(left: 20),
                   child: ElevatedButton(
                     onPressed: _pickDate,
                     child: Text('Choose date'),
@@ -388,7 +392,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: EdgeInsetsGeometry.only(left: 40),
+                  padding: EdgeInsets.only(left: 40),
                   child: ElevatedButton(
                     onPressed: () {
                       print('Edited');
@@ -397,7 +401,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsetsGeometry.only(right: 40),
+                  padding: EdgeInsets.only(right: 40),
                   child: ElevatedButton(
                     onPressed: () {
                       print('Deleted');
